@@ -5,6 +5,7 @@ public class CompressedTrieNode {
 	private SinglyLinkedList edgeList; // λίστα από ακμές/παιδιά
 
 	public boolean isEndOfWord; // true αν εδώ τελειώνει λέξη
+	public int importance; //how many times we found the world
 
 	public CompressedTrieNode() {
 		this.edgeList = new SinglyLinkedList();
