@@ -10,6 +10,7 @@ public class CompressedTrieNode {
 	public CompressedTrieNode() {
 		this.edgeTable = new RobinHoodHashing();
 		this.isEndOfWord = false;
+		this.importance = 0;
 		/* Υλοποίηση */ }
 
 	public void insertEdge(Edge edge) {
