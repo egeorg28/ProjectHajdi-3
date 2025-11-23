@@ -3,22 +3,6 @@ package hw;
 
 public class RobinHoodHashing {
 
-    // 🔹 Αυτή η Edge ισχύει ΜΟΝΟ μέσα στη RobinHoodHashing
-    private static class Edge {
-        int key;
-        boolean occupied;
-
-        Edge(int key) {
-            this.key = key;
-            this.occupied = true;
-        }
-
-        @Override
-        public String toString() {
-            return occupied ? String.valueOf(key) : (key + " (deleted)");
-        }
-    }
-
     // ================== ΠΕΔΙΑ ΤΟΥ HASHING ==================
     private Edge[] table;
     private int capacity;
