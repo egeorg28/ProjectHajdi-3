@@ -1,5 +1,9 @@
 package hw;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
 public class CompressedTrie {
 	CompressedTrieNode root; // Η ρίζα του δέντρου
 
@@ -150,4 +154,46 @@ public class CompressedTrie {
         }
         return a.substring(0, i);
     }
+    
+    public void loadDictionary(String filename) {
+    try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+        String line;
+        while ((line = br.readLine()) != null) {
+            String word = line.trim();
+            if (word.isEmpty()) continue;
+
+            word = word.toLowerCase();   // 🔹 ΟΛΑ σε πεζά
+            insert(word);                // 🔹 Χρησιμοποιείς ΤΟΝ CompressedTrie που ήδη έφτιαξες
+        }
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+
+public void updateImportanceFromText(String filename) {
+    try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+        String line;
+        while ((line = br.readLine()) != null) {
+
+            // Σπάσε τη γραμμή σε λέξεις
+            String[] tokens = line.split("\\W+");
+
+            for (String token : tokens) {
+                if (!token.isEmpty()) {
+                    String word = token.toLowerCase();
+
+                    // Αν η λέξη είναι στο λεξικό, αύξησε τη σημαντικότητά της
+                    if (search(word)) {
+                        increaseImportance(word);
+                    }
+                }
+            }
+        }
+
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+
+
 }
