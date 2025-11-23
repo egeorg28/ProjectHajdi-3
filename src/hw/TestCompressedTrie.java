@@ -20,7 +20,7 @@ public class TestCompressedTrie {
             "bull",
             "buy",
             "sell",
-            "stock",
+        
             "stop"
         };
 
