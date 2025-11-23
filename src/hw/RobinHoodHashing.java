@@ -1,9 +1,7 @@
 package hw;
 
-
 public class RobinHoodHashing {
 
-    // ================== ΠΕΔΙΑ ΤΟΥ HASHING ==================
     private Edge[] table;
     private int capacity;
     private int size;
@@ -20,21 +18,24 @@ public class RobinHoodHashing {
         this.maxProbeLength = 0;
     }
 
-    private int hash(int key) {
-        int h = key % capacity;
+    // Hash με βάση το ΠΡΩΤΟ γράμμα της ακμής
+    private int hash(char c) {
+        int h = (c - 'a') % capacity;
         if (h < 0) h += capacity;
         return h;
     }
 
-    // ============= INSERT =============
-    public void insert(int key) {
-        int index = hash(key);
+    // ============= INSERT EDGE =============
+    public void insert(Edge edge) {
+        char c = edge.label.charAt(0);
+        int index = hash(c);
         int probeLen = 0;
-        Edge newEdge = new Edge(key);
+        Edge newEdge = edge;
 
         while (true) {
             if (table[index] == null || !table[index].occupied) {
                 table[index] = newEdge;
+                newEdge.occupied = true;
                 size++;
 
                 if (probeLen > maxProbeLength) {
@@ -47,10 +48,10 @@ public class RobinHoodHashing {
                 return;
             } else {
                 Edge existing = table[index];
-
-                int existingHome = hash(existing.key);
+                char exC = existing.label.charAt(0);
+                int home = hash(exC);
                 int existingProbe =
-                        (index - existingHome + capacity) % capacity;
+                        (index - home + capacity) % capacity;
 
                 if (probeLen > existingProbe) {
                     Edge temp = existing;
@@ -65,24 +66,29 @@ public class RobinHoodHashing {
         }
     }
 
-    // ============= SEARCH =============
-    public boolean search(int key) {
-        int index = hash(key);
+    // ============= GET EDGE BY FIRST CHAR =============
+    public Edge getEdge(char c) {
+        int index = hash(c);
         int probeLen = 0;
 
         while (probeLen <= maxProbeLength) {
             Edge e = table[index];
 
             if (e == null) {
-                return false;
+                return null;
             }
-            if (e.occupied && e.key == key) {
-                return true;
+
+            if (e.occupied &&
+                !e.label.isEmpty() &&
+                e.label.charAt(0) == c) {
+                return e;
             }
+
             probeLen++;
             index = (index + 1) % capacity;
         }
-        return false;
+
+        return null;
     }
 
     // ============= REHASH =============
@@ -92,8 +98,8 @@ public class RobinHoodHashing {
             return;
         }
 
-        int oldCapacity = capacity;
         Edge[] oldTable = table;
+        int oldCapacity = capacity;
 
         primeIndex++;
         capacity = PRIMES[primeIndex];
@@ -104,17 +110,8 @@ public class RobinHoodHashing {
         for (int i = 0; i < oldCapacity; i++) {
             Edge e = oldTable[i];
             if (e != null && e.occupied) {
-                insert(e.key);
+                insert(e);
             }
-        }
-    }
-
-    public void printTable() {
-        System.out.println("Table (capacity=" + capacity +
-                           ", size=" + size +
-                           ", maxProbeLength=" + maxProbeLength + ")");
-        for (int i = 0; i < capacity; i++) {
-            System.out.println(i + " -> " + (table[i] == null ? "_" : table[i]));
         }
     }
 }
