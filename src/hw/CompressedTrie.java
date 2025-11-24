@@ -177,20 +177,26 @@ public class CompressedTrie {
         return a.substring(0, i);
     }
     
-    public void loadDictionary(String filename) {
+ public boolean loadDictionary(String filename) {
     try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+
         String line;
         while ((line = br.readLine()) != null) {
             String word = line.trim();
             if (word.isEmpty()) continue;
 
-            word = word.toLowerCase();   // 🔹 ΟΛΑ σε πεζά
-            insert(word);                // 🔹 Χρησιμοποιείς ΤΟΝ CompressedTrie που ήδη έφτιαξες
+            word = word.toLowerCase();   // ΟΛΑ σε πεζά
+            insert(word);                // εισαγωγή στο trie
         }
+
+        return true;   // ✔ Φόρτωση ολοκληρώθηκε κανονικά
+
     } catch (IOException e) {
-        e.printStackTrace();
+        System.out.println("Error: File not found or unreadable → " + filename);
+        return false;  // ❌ Αποτυχία φόρτωσης
     }
 }
+
 
 public void updateImportanceFromText(String filename) {
     try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
@@ -216,6 +222,74 @@ public void updateImportanceFromText(String filename) {
         e.printStackTrace();
     }
 }
+    public static void main(String[] args) {
+
+        // Θέλουμε 2 ορίσματα:
+        // 1ο: dictionary file
+        // 2ο: text file
+        if (args.length < 2) {
+            System.out.println("Χρήση:");
+            System.out.println("  java -cp src hw.Main <dictionary-file> <text-file>");
+            return;
+        }
+
+        String dictionaryFile = args[0];
+        String textFile      = args[1];
+
+        CompressedTrie trie = new CompressedTrie();
+
+        // ===== ΜΕΡΟΣ 1: ΦΟΡΤΩΣΗ ΛΕΞΙΚΟΥ =====
+        System.out.println("Loading dictionary from: " + dictionaryFile);
+        boolean ok = trie.loadDictionary(dictionaryFile);   // loadDictionary πρέπει να επιστρέφει boolean
+
+        if (!ok) {
+            System.out.println("Dictionary NOT loaded. Exiting...");
+            return;
+        }
+
+        System.out.println("Dictionary loaded successfully!");
+
+        // ===== ΜΕΡΟΣ 2: ΕΝΗΜΕΡΩΣΗ importance ΑΠΟ ΚΕΙΜΕΝΟ =====
+        System.out.println("Updating importance from text file: " + textFile);
+        trie.updateImportanceFromText(textFile);
+        System.out.println("Finished processing text file.");
+
+        // Εδώ, αν θες, αργότερα μπορείς να βάλεις δοκιμές για να δεις importance
+        // π.χ. trie.printWordImportance("ally"); (αν φτιάξεις τέτοια μέθοδο)
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 }
