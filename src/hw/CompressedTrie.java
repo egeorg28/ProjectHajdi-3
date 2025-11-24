@@ -20,6 +20,9 @@ public class CompressedTrie {
         if (word == null || word.isEmpty()) return false;
         return searchRecursive(root, word);
     }
+    public void increaseImportance(String word) {
+    increaseImportanceRecursive(root, word);
+}
 
     // =====================================================
     // PRIVATE ΒΟΗΘΗΤΙΚΕΣ
@@ -120,6 +123,25 @@ public class CompressedTrie {
 
         // Αν φτάσουμε εδώ, κάτι δεν πήγε όπως το περιμένουμε, αλλά δεν κάνουμε κάτι άλλο.
     }
+
+    private void increaseImportanceRecursive(CompressedTrieNode node, String word) {
+    if (word.length() == 0) {
+        node.importance++;      // ΑΥΞΗΣΗ ΣΗΜΑΝΤΙΚΟΤΗΤΑΣ
+        return;
+    }
+
+    char first = word.charAt(0);
+    Edge edge = node.getEdgeByFirstChar(first);
+
+    if (edge == null) return; // δεν υπάρχει
+
+    String label = edge.label;
+
+    if (word.startsWith(label)) {
+        String rest = word.substring(label.length());
+        increaseImportanceRecursive(edge.child, rest);
+    }
+}
 
     private boolean searchRecursive(CompressedTrieNode node, String word) {
         // Αν έχουμε τελειώσει τη λέξη, απλά κοιτάμε αν αυτός ο κόμβος είναι τέλος λέξης
