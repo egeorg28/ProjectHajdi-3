@@ -1,4 +1,6 @@
 package hw;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RobinHoodHashing {
 
@@ -114,4 +116,19 @@ public class RobinHoodHashing {
             }
         }
     }
+
+        // ============= GET ALL EDGES (για DFS στο CompressedTrie) =============
+    public List<Edge> getAllEdges() {
+        List<Edge> edges = new ArrayList<>();
+        for (int i = 0; i < capacity; i++) {
+            Edge e = table[i];
+            if (e != null && e.occupied) {
+                edges.add(e);
+            }
+        }
+        return edges;
+    }
 }
+
+
+
