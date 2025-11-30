@@ -25,15 +25,12 @@ public class CompressedTrieNode {
 		 * // Εύρεση ακμής με βάση το πρώτο γράμμα
          */ }
 
-    public java.util.List<Edge> getAllEdges() {
-        return edgeTable.getAllEdges();
+    public RobinHoodHashing getEdgeTable() {
+        return edgeTable;
     }
-public RobinHoodHashing getEdgeTable() {
-    return edgeTable;
-}
 
-public boolean hasEdges() {
-    return edgeTable != null;
-}
+    public boolean hasEdges() {
+        return edgeTable != null;
+    }
 
 }
