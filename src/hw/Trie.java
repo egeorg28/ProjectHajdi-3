@@ -2,7 +2,7 @@ package hw;
 
 public class Trie {
 
-    // Ρίζα του δέντρου
+    
     private TrieNode root;
 
     public Trie() {
@@ -156,68 +156,6 @@ public class Trie {
         }
     }
 
-    // ================== main: δοκιμές όλων των μεθόδων ==================
-    public static void main(String[] args) {
-        Trie trie = new Trie();
 
-        // ---------- INSERT ----------
-        System.out.println("=== INSERTING WORDS ===");
-        String[] words = { "answer", "any", "by", "bye", "the", "their", "there" };
-        for (String w : words) {
-            trie.insert(w);
-            System.out.println("Inserted: " + w);
-        }
-
-        // ---------- DISPLAY ----------
-        System.out.println("\n=== DISPLAY ALL WORDS ===");
-        trie.display();
-
-        // ---------- SEARCH (υπάρχουν) ----------
-        System.out.println("\n=== SEARCH EXISTING WORDS ===");
-        String[] exist = { "answer", "any", "bye", "their", "there" };
-        for (String w : exist) {
-            System.out.println("search(\"" + w + "\") = " + trie.search(w));
-        }
-
-        // ---------- SEARCH (δεν υπάρχουν) ----------
-        System.out.println("\n=== SEARCH NON-EXISTING WORDS ===");
-        String[] notExist = { "ans", "an", "byy", "thee", "hello" };
-        for (String w : notExist) {
-            System.out.println("search(\"" + w + "\") = " + trie.search(w));
-        }
-
-        // ---------- DELETE TESTS ----------
-        System.out.println("\n=== DELETE TESTS ===");
-
-        // 1. Διαγραφή λέξης που υπάρχει & δεν είναι πρόθεμα
-        System.out.println("delete(\"bye\"): " + trie.delete("bye"));
-        System.out.println("search(\"bye\") = " + trie.search("bye"));
-
-        // 2. Διαγραφή λέξης που είναι πρόθεμα άλλων ('the' -> 'their', 'there')
-        System.out.println("\ndelete(\"the\"): " + trie.delete("the"));
-        System.out.println("search(\"the\")   = " + trie.search("the"));
-        System.out.println("search(\"their\") = " + trie.search("their"));
-        System.out.println("search(\"there\") = " + trie.search("there"));
-
-        // 3. Διαγραφή λέξης που μοιράζεται πρόθεμα με άλλη ('answer' / 'any')
-        System.out.println("\ndelete(\"answer\"): " + trie.delete("answer"));
-        System.out.println("search(\"answer\") = " + trie.search("answer"));
-        System.out.println("search(\"any\")    = " + trie.search("any"));
-
-        // 4. Διαγραφή λέξης που δεν υπάρχει
-        System.out.println("\ndelete(\"banana\"): " + trie.delete("banana"));
-
-        // ---------- DISPLAY μετά από διαγραφές ----------
-        System.out.println("\n=== DISPLAY AFTER DELETIONS ===");
-        trie.display();
-
-        // ---------- EDGE CASES ----------
-        System.out.println("\n=== EDGE CASE TESTS ===");
-        System.out.println("search(null)  = " + trie.search(null));
-        System.out.println("search(\"\")   = " + trie.search(""));
-        System.out.println("delete(null)  = " + trie.delete(null));
-        System.out.println("delete(\"\")   = " + trie.delete(""));
-        System.out.println("insert(\"Hello\") (invalid chars):");
-        trie.insert("Hello");  // Θα τυπώσει "Invalid character: H"
-    }
+    
 }

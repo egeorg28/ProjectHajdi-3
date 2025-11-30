@@ -15,19 +15,13 @@ public class CompressedTrieNode {
 
     public void insertEdge(Edge edge) {
         edgeTable.insert(edge);
-        /*
-		 * εισαγωγή ακμής στη λίστα με τα παιδιά
-         */ }
+         }
 
     public Edge getEdgeByFirstChar(char c) {
         return edgeTable.getEdge(c);
-        /*
-		 * // Εύρεση ακμής με βάση το πρώτο γράμμα
-         */ }
+        }
 
-    public java.util.List<Edge> getAllEdges() {
-        return edgeTable.getAllEdges();
-    }
+    
 public RobinHoodHashing getEdgeTable() {
     return edgeTable;
 }

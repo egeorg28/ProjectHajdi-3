@@ -11,7 +11,5 @@ public class Edge {
 		this.child = child;
 		this.occupied=true;
 
-		/*
-		 * Υλοποίηση
-		 */ }
+		 }
 }
