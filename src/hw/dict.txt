@@ -1,6 +1,6 @@
-apple
-class
-application
-ucy
-apt
-ape
+cat
+car
+cart
+carbon
+dog
+door

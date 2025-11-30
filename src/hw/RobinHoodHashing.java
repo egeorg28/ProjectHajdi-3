@@ -96,7 +96,6 @@ public class RobinHoodHashing {
     // ============= REHASH =============
     private void rehash() {
         if (primeIndex + 1 >= PRIMES.length) {
-            System.out.println("Cannot rehash: reached max prime capacity.");
             return;
         }
 
@@ -128,7 +127,15 @@ public class RobinHoodHashing {
         }
         return edges;
     }
+
+public Edge[] getTable() {
+    return table;
 }
 
+public int getCapacity() {
+    return capacity;
+}
+}
 
+        
 
