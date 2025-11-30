@@ -12,7 +12,7 @@ import java.io.IOException;
 public class CompressedTrie {
 
     // Root = start of trie = represents the empty word ""
-    private CompressedTrieNode root;
+     CompressedTrieNode root;
 
     // ========= CONSTRUCTOR =========
     /**
