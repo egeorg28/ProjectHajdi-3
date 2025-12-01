@@ -1,7 +1,0 @@
-cat cat cat cat
-car car
-cart
-carbon carbon carbon
-
-dog dog dog dog dog
-door

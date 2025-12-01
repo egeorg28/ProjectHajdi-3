@@ -5,199 +5,161 @@ import java.io.FileReader;
 import java.io.IOException;
 
 /**
- * A Compressed Trie that stores words using EDGE LABELS (string chunks) instead
- * of one character per node, and stores an "importance" counter on the node
- * where each word ends.
+ * A Compressed Trie that stores words using EDGE LABELS (string chunks)
+ * instead of one character per node, and stores an "importance" counter
+ * on the node where each word ends.
  */
 public class CompressedTrie {
 
     // Root = start of trie = represents the empty word ""
-     CompressedTrieNode root;
+    private CompressedTrieNode root;
 
     // ========= CONSTRUCTOR =========
     /**
-     * What it does: Creates an empty compressed trie.
-     *
-     * Example: CompressedTrie t = new CompressedTrie(); → t has only an empty
-     * root node.
+     * Creates an empty compressed trie (only root node).
      */
     public CompressedTrie() {
-        this.root = new CompressedTrieNode(); // Make the empty root
+        this.root = new CompressedTrieNode();
     }
 
     // ========= INSERT (public) =========
     /**
-     * What it does: Inserts a word into the compressed trie, splitting edges if
-     * needed so common prefixes are stored only once.
-     *
-     * Example: t.insert("bear"); → creates path: root --"bear"-->
-     * newNode(isEnd=true)
+     * Inserts a word into the compressed trie, splitting edges if needed
+     * so common prefixes are stored only once.
      */
     public void insert(String word) {
         if (word == null || word.isEmpty()) {
             return; // Ignore bad input
         }
-        // Lowercase for uniformity and start recursion from root
         insertRecursive(root, word.toLowerCase());
     }
 
     // ========= SEARCH (public) =========
     /**
-     * What it does: Returns true if a word is stored as a complete word in the
-     * trie.
-     *
-     * Example: t.search("be"); → true if "be" was inserted and marked end=true
-     * t.search("bell"); → true if path matches labels and end node is end=true
+     * Returns true if a word is stored as a complete word in the trie.
      */
     public boolean search(String word) {
         if (word == null || word.isEmpty()) {
-            return false; // Bad input → false
+            return false;
         }
-        // Start search from root
         return searchRecursive(root, word.toLowerCase());
     }
 
-    // ========= INCREASE IMPORTANCE =========
+    // ========= INCREASE IMPORTANCE (simple version) =========
     /**
-     * What it does: Follows the stored path of a word and adds +1 to
-     * `importance` on the node where the word ends (does nothing if path does
-     * not exist).
+     * Follows the path of a word and increments importance at the terminal node.
+     * If the path does not exist, it does nothing.
      *
-     * Example: t.insert("stop"); t.increaseImportance("stop");
-     * t.increaseImportance("stop"); t.getImportance("stop") → 2
+     * (Not used in the fast text update; kept as a utility.)
      */
     public void increaseImportance(String word) {
         if (word == null || word.isEmpty()) {
-            return; // Ignore bad input
+            return;
         }
-        // Start from root
         increaseImportanceRecursive(root, word.toLowerCase());
     }
 
     // ========= GET IMPORTANCE =========
     /**
-     * What it does: Returns the importance counter of a complete word stored in
-     * the trie. If the word is not stored, returns 0.
-     *
-     * Example: t.getImportance("stop") → 2 (if importance was increased twice)
-     * t.getImportance("hello") → 0 (not inserted)
+     * Returns the importance of a word if it exists, or 0 otherwise.
      */
     public int getImportance(String word) {
         if (word == null || word.isEmpty()) {
-            return 0; // Bad input → 0
+            return 0;
         }
-        // Start importance fetch from root
         return getImportanceRecursive(root, word.toLowerCase());
     }
 
     // =====================================================
     //                    RECURSIVE HELPERS
     // =====================================================
+
     // ========= INSERT RECURSIVE =========
-    /**
-     * What it does: Core recursive insert logic for compressed trie. It finds
-     * the matching edge, computes common prefix, and splits the edge if
-     * necessary.
-     *
-     * Example call (internally called by public insert): insertRecursive(node,
-     * "cart")
-     */
     private void insertRecursive(CompressedTrieNode currentNode, String word) {
-        // If no letters left to insert → mark this node as the end of a word
+        // No letters left → mark node as end-of-word
         if (word.length() == 0) {
             currentNode.isEndOfWord = true;
             return;
         }
 
-        // Take next letter to find correct edge
         char firstChar = word.charAt(0);
-        // Find edge whose label starts with firstChar
         Edge edge = currentNode.getEdgeByFirstChar(firstChar);
 
-        // If no such edge exists → create a new edge with the whole remaining word
+        // No edge: create new edge with whole remaining word
         if (edge == null) {
             CompressedTrieNode newChild = new CompressedTrieNode();
-            newChild.isEndOfWord = true; // word ends here
-            currentNode.insertEdge(new Edge(word, newChild)); // edge label = full word
+            newChild.isEndOfWord = true;
+            currentNode.insertEdge(new Edge(word, newChild));
             return;
         }
 
-        // The string chunk stored on that edge
         String label = edge.label;
-        // Compute longest shared start between edge.label and the word
         String commonPrefix = commonPrefix(label, word);
 
-        // Safety: if for some reason no common prefix (should not happen normally)
+        // Safety: no common prefix (should not normally happen)
         if (commonPrefix.length() == 0) {
             CompressedTrieNode newChild = new CompressedTrieNode();
             newChild.isEndOfWord = true;
-            currentNode.insertEdge(new Edge(word, newChild)); // standalone edge
+            currentNode.insertEdge(new Edge(word, newChild));
             return;
         }
 
-        // ----- CASE A: EXACT MATCH ----- (label == word)
-        if (commonPrefix.length() == label.length() && commonPrefix.length() == word.length()) {
-            // Path already exists, just mark child as end of word
+        // CASE A: label == word
+        if (commonPrefix.length() == label.length()
+                && commonPrefix.length() == word.length()) {
             edge.child.isEndOfWord = true;
             return;
         }
 
-        // ----- CASE B: label is prefix of word ----- (go deeper)
-        // Example: label="car", word="cart"
-        if (commonPrefix.length() == label.length() && commonPrefix.length() < word.length()) {
-            // Remove matched label from word (remaining suffix)
+        // CASE B: label is prefix of word
+        // e.g., label = "car", word = "cart"
+        if (commonPrefix.length() == label.length()
+                && commonPrefix.length() < word.length()) {
             String remaining = word.substring(label.length());
-            // Continue insertion from the child node
             insertRecursive(edge.child, remaining);
             return;
         }
 
-        // ----- CASE C: word is prefix of label ----- (split edge)
-        // Example: label="carton", word="car"
-        if (commonPrefix.length() == word.length() && commonPrefix.length() < label.length()) {
-            // leftover part of old label, e.g. "ton"
+        // CASE C: word is prefix of label
+        // e.g., label = "carton", word = "car"
+        if (commonPrefix.length() == word.length()
+                && commonPrefix.length() < label.length()) {
+
             String suffixLabel = label.substring(commonPrefix.length());
-            // store old child (was pointed by original edge)
             CompressedTrieNode oldChild = edge.child;
 
-            // new middle node where the new word ends
             CompressedTrieNode middle = new CompressedTrieNode();
-            middle.isEndOfWord = true;
+            middle.isEndOfWord = true;   // word ends here
             middle.importance = 0;
 
-            // shorten edge label to the common part ("car")
-            edge.label = commonPrefix;
-            // edge now points to middle
+            edge.label = commonPrefix;   // "car"
             edge.child = middle;
 
-            // middle points to oldChild via the leftover label ("ton")
-            middle.insertEdge(new Edge(suffixLabel, oldChild));
+            middle.insertEdge(new Edge(suffixLabel, oldChild)); // "ton" → oldChild
             return;
         }
 
-        // ----- CASE D: partial overlap ----- (common shorter than both)
-        // Example: label="car", word="cat", common="ca"
-        if (commonPrefix.length() < label.length() && commonPrefix.length() < word.length()) {
-            // leftover old path "r"
-            String suffixLabel = label.substring(commonPrefix.length());
-            // leftover new path "t"
-            String suffixWord = word.substring(commonPrefix.length());
+        // CASE D: partial overlap
+        // e.g., label = "car", word = "cat", common = "ca"
+        if (commonPrefix.length() < label.length()
+                && commonPrefix.length() < word.length()) {
 
-            // keep old child
+            String suffixLabel = label.substring(commonPrefix.length()); // "r"
+            String suffixWord  = word.substring(commonPrefix.length());  // "t"
+
             CompressedTrieNode oldChild = edge.child;
-            // new split node
+
             CompressedTrieNode middle = new CompressedTrieNode();
             middle.isEndOfWord = false;
             middle.importance = 0;
 
-            // edge from currentNode now has label = common prefix ("ca")
-            edge.label = commonPrefix;
+            edge.label = commonPrefix; // "ca"
             edge.child = middle;
 
-            // old word branch: middle --"r"--> oldChild
+            // old branch: "r"
             middle.insertEdge(new Edge(suffixLabel, oldChild));
 
-            // new word branch: middle --"t"--> newChild
+            // new branch: "t"
             CompressedTrieNode newChild = new CompressedTrieNode();
             newChild.isEndOfWord = true;
             newChild.importance = 0;
@@ -206,104 +168,147 @@ public class CompressedTrie {
             return;
         }
 
-        // else → nothing more to do
+        // else: nothing more to do
     }
 
     // ========= IMPORTANCE INCREMENT RECURSIVE =========
-    /**
-     * What it does: Same path logic as search but instead of returning boolean,
-     * increments importance at the end node of the word.
-     *
-     * Example: increaseImportanceRecursive(root, "stop")
-     */
     private static void increaseImportanceRecursive(CompressedTrieNode currentNode, String word) {
-        // If full word has been matched
         if (word.length() == 0) {
-            // Add +1 to importance of the word ending here
             currentNode.importance++;
             return;
         }
 
-        // Next character to guide traversal
         char firstChar = word.charAt(0);
-        // Find edge starting with this character
         Edge edge = currentNode.getEdgeByFirstChar(firstChar);
         if (edge == null) {
-            // No such path → nothing to increment
             return;
         }
 
-        // chunk string
         String label = edge.label;
-        // If leftover word starts with this label chunk
         if (word.startsWith(label)) {
-            // consume matched chunk
             String remaining = word.substring(label.length());
-            // go deeper
             increaseImportanceRecursive(edge.child, remaining);
         }
-        // else: mismatch → do nothing
     }
 
     // ========= SEARCH RECURSIVE =========
-    /**
-     * What it does: Follows edge labels to check if the word exists as a full
-     * word.
-     *
-     * Example: t.search("stop") → true only if path matches labels and final
-     * node is end=true
-     */
     private static boolean searchRecursive(CompressedTrieNode currentNode, String word) {
-        // If we've fully matched all characters of the word
         if (word.length() == 0) {
-            // Word exists only if this node is an end of a word
             return currentNode.isEndOfWord;
         }
 
-        // Next char to find edge
         char firstChar = word.charAt(0);
-        // Find correct edge from current node
         Edge edge = currentNode.getEdgeByFirstChar(firstChar);
         if (edge == null) {
-            // No path → word not stored
             return false;
         }
 
-        // Edge chunk
         String label = edge.label;
-        // If the remaining word starts with the full label chunk
         if (word.startsWith(label)) {
-            // Remove matched part
             String remaining = word.substring(label.length());
-            // Continue on child
             return searchRecursive(edge.child, remaining);
         }
-
-        // Label mismatch → word not stored
         return false;
+    }
+
+    // ========== COMMON PREFIX ==========
+    private static String commonPrefix(String a, String b) {
+        int max = Math.min(a.length(), b.length());
+        int i = 0;
+        while (i < max && a.charAt(i) == b.charAt(i)) {
+            i++;
+        }
+        return a.substring(0, i);
+    }
+
+    // ========= GET IMPORTANCE RECURSIVE =========
+    private int getImportanceRecursive(CompressedTrieNode node, String word) {
+        if (word.length() == 0) {
+            return node.importance;
+        }
+
+        char first = word.charAt(0);
+        Edge edge = node.getEdgeByFirstChar(first);
+        if (edge == null) {
+            return 0;
+        }
+
+        String label = edge.label;
+        if (word.startsWith(label)) {
+            String rest = word.substring(label.length());
+            return getImportanceRecursive(edge.child, rest);
+        }
+        return 0;
+    }
+
+    // =====================================================
+    //      *** NEW: FASTER IMPORTANCE UPDATE FOR TEXT ***
+    // =====================================================
+
+    /**
+     * NEW method (added for speed):
+     *   - Tries to find the given word in the trie.
+     *   - If the full word exists AND ends at a valid word node,
+     *     it increments importance.
+     *   - If the word is not in the dictionary, it does nothing.
+     *
+     * Used in updateImportanceFromText so we only traverse the trie ONCE
+     * per word (instead of search + increase).
+     */
+    public void increaseImportanceIfExists(String word) {
+        if (word == null || word.isEmpty()) {
+            return;
+        }
+        increaseImportanceIfExistsRecursive(root, word.toLowerCase());
+    }
+
+    /**
+     * Recursive helper for increaseImportanceIfExists.
+     * Single traversal:
+     *   - If we reach the end of the word and node.isEndOfWord == true,
+     *     then importance++ for that node.
+     *   - If at any point we cannot follow edges, we stop.
+     */
+    private static void increaseImportanceIfExistsRecursive(CompressedTrieNode currentNode, String word) {
+        if (word.length() == 0) {
+            if (currentNode.isEndOfWord) {
+                currentNode.importance++;
+            }
+            return;
+        }
+
+        char firstChar = word.charAt(0);
+        Edge edge = currentNode.getEdgeByFirstChar(firstChar);
+        if (edge == null) {
+            return; // word not in dictionary
+        }
+
+        String label = edge.label;
+        if (word.startsWith(label)) {
+            String rest = word.substring(label.length());
+            increaseImportanceIfExistsRecursive(edge.child, rest);
+        } else {
+            // label does not match → word not in dictionary
+            return;
+        }
     }
 
     // ========= LOAD DICTIONARY =========
     /**
-     * What it does: Reads a dictionary file and inserts each non-empty line as
-     * a word.
-     *
-     * Example: dict.txt contains: be, bear, bell → all inserted in compressed
-     * form.
+     * Reads a dictionary file (one word per line) and inserts all words
+     * into the compressed trie.
      */
     public boolean loadDictionary(String filename) {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
             String line;
 
-            // Read each line of the dictionary file
             while ((line = br.readLine()) != null) {
-                String w = line.trim(); // Remove spaces at start/end
-                if (!w.isEmpty()) {     // Skip empty lines
-                    insert(w.toLowerCase()); // Insert lowercase word into trie
+                String w = line.trim();
+                if (!w.isEmpty()) {
+                    insert(w.toLowerCase());
                 }
             }
-            return true; // Completed successfully
-
+            return true;
         } catch (IOException e) {
             System.out.println("Dictionary file error!");
             return false;
@@ -312,35 +317,39 @@ public class CompressedTrie {
 
     // ========= UPDATE IMPORTANCE FROM TEXT =========
     /**
-     * What it does: Reads a text file, splits lines into tokens (words), and
-     * for each token that exists in the trie, increases its importance.
+     * *** MODIFIED FOR SPEED ***
      *
-     * Example: text.txt contains: "stop stop bull" → after this:
-     * importance(stop) = 2 importance(bull) = 1
+     * Reads a text file character-by-character, builds words using only letters,
+     * and for each completed word calls increaseImportanceIfExists(word).
+     *
+     * This avoids slow regex split("\\W+") and avoids search+increaseImportance
+     * (two traversals). We now have only ONE traversal per dictionary word.
      */
     public void updateImportanceFromText(String filename) {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
 
-            String line;
-            // Read each line from the text file
-            while ((line = br.readLine()) != null) {
-                // Split into tokens using non-word characters as separators
-                String[] tokens = line.split("\\W+");
+            StringBuilder tokenBuilder = new StringBuilder();
+            int ch;
 
-                // Classic index-based for loop over tokens
-                for (int i = 0; i < tokens.length; i++) {
-                    String token = tokens[i]; // one piece from the split
+            // Read character by character
+            while ((ch = br.read()) != -1) {
+                char c = (char) ch;
 
-                    if (token != null && !token.isEmpty()) { // skip null or ""
-                        String w = token.toLowerCase(); // normalize to lowercase
-
-                        // If this word exists in the dictionary trie
-                        if (search(w)) {
-                            // then increase its importance by 1
-                            increaseImportance(w);
-                        }
+                if (Character.isLetter(c)) {
+                    tokenBuilder.append(Character.toLowerCase(c));
+                } else {
+                    if (tokenBuilder.length() > 0) {
+                        String word = tokenBuilder.toString();
+                        increaseImportanceIfExists(word);  // ONE traversal
+                        tokenBuilder.setLength(0);        // reset builder
                     }
                 }
+            }
+
+            // Last word at EOF (if any)
+            if (tokenBuilder.length() > 0) {
+                String word = tokenBuilder.toString();
+                increaseImportanceIfExists(word);
             }
 
         } catch (IOException e) {
@@ -348,80 +357,266 @@ public class CompressedTrie {
         }
     }
 
-    // ========== COMMON PREFIX ==========
+    // ==========================================================
+    //      INNER CLASSES FOR PREFIX OPERATIONS / DFS HELPERS
+    // ==========================================================
+
     /**
-     * What it does: Finds the longest starting sequence of identical characters
-     * between 2 strings.
-     *
-     * Example: commonPrefix("carton", "cart") → "cart" commonPrefix("car",
-     * "cat") → "ca"
+     * Helper when we search for a prefix:
+     *  - node  : trie node where the prefix ends
+     *  - built : full string from root to that node
      */
-    private static String commonPrefix(String a, String b) {
-        int max = Math.min(a.length(), b.length());
-        int i = 0;
-        // Increase i while both strings match at position i
-        while (i < max && a.charAt(i) == b.charAt(i)) {
-            i++;
+    private static class PrefixResult {
+        CompressedTrieNode node;
+        String built;
+        PrefixResult(CompressedTrieNode node, String built) {
+            this.node = node;
+            this.built = built;
         }
-        // Return substring from 0 to i (not including i)
-        return a.substring(0, i);
     }
 
     /**
-     * Recursive helper for getImportance(String word).
-     *
-     * What it does: - It follows the compressed trie path for the given word,
-     * using edge labels (string chunks). - When the whole word has been
-     * consumed (word.length() == 0), it returns the importance value stored at
-     * that node. - If at some point the path does not exist or the labels don't
-     * match, it returns 0.
-     *
-     * Example: Suppose the trie contains "stop" and its end node has importance
-     * = 3.
-     *
-     * getImportanceRecursive(root, "stop") - matches an edge "st", calls child
-     * with "op" - matches an edge "op", calls child with "" - word.length() ==
-     * 0 → returns importance (3)
+     * Helper for accumulating sum and count (for average).
      */
-    private int getImportanceRecursive(CompressedTrieNode node, String word) {
+    private static class SumCount {
+        long sum;
+        int count;
+    }
 
-        // If we have consumed all characters of the word,
-        // this means we are standing at the node where this word should end.
-        if (word.length() == 0) {
-            // Return the importance value stored at this node.
-            return node.importance;
+    // ========= findNodeForPrefix =========
+    private PrefixResult findNodeForPrefix(String prefix) {
+        if (prefix == null) {
+            return null;
+        }
+        return findNodeForPrefixRecursive(root, "", prefix.toLowerCase());
+    }
+
+    private PrefixResult findNodeForPrefixRecursive(CompressedTrieNode node,
+                                                    String built,
+                                                    String remaining) {
+        if (remaining.length() == 0) {
+            return new PrefixResult(node, built);
         }
 
-        // Get the first character of the remaining word.
-        char first = word.charAt(0);
-
-        // Try to find an outgoing edge from this node
-        // whose label starts with that first character.
+        char first = remaining.charAt(0);
         Edge edge = node.getEdgeByFirstChar(first);
-
-        // If no such edge exists, then there is no path for this word in the trie,
-        // so the word is not stored → importance is 0.
         if (edge == null) {
-            return 0;
+            return null;
         }
 
-        // The label (string chunk) stored on this edge.
         String label = edge.label;
 
-        // Check if the remaining word actually starts with this label.
-        // If not, the path doesn't match, so the word doesn't exist.
-        if (word.startsWith(label)) {
-            // Remove the label from the beginning of the word
-            // (we have "consumed" that part along the edge).
-            String rest = word.substring(label.length());
-
-            // Continue recursively on the child node with the remaining substring.
-            return getImportanceRecursive(edge.child, rest);
+        // remaining starts with label
+        if (remaining.startsWith(label)) {
+            String rest = remaining.substring(label.length());
+            return findNodeForPrefixRecursive(edge.child, built + label, rest);
         }
 
-        // If the word does not start with the label,
-        // then the path breaks here and the word does not exist in the trie.
-        // Return 0 as importance.
-        return 0;
+        // label starts with remaining → prefix ends inside label
+        if (label.startsWith(remaining)) {
+            return new PrefixResult(edge.child, built + label);
+        }
+
+        return null;
+    }
+
+    // ========= DFS HELPERS =========
+    private void dfsCollectTopK(CompressedTrieNode node,
+                                String built,
+                                MyMinHeap heap,
+                                int k) {
+        if (node == null) return;
+
+        if (node.isEndOfWord) {
+            heap.insertWithCapacity(built, node.importance, k);
+        }
+
+        RobinHoodHashing table = node.getEdgeTable();
+        Edge[] edges = table.getTable();
+        int cap = table.getCapacity();
+
+        for (int i = 0; i < cap; i++) {
+            Edge e = edges[i];
+            if (e != null && e.occupied) {
+                dfsCollectTopK(e.child, built + e.label, heap, k);
+            }
+        }
+    }
+
+    private void dfsSumCount(CompressedTrieNode node, SumCount acc) {
+        if (node == null) return;
+
+        if (node.isEndOfWord) {
+            acc.sum += node.importance;
+            acc.count += 1;
+        }
+
+        RobinHoodHashing table = node.getEdgeTable();
+        Edge[] edges = table.getTable();
+        int cap = table.getCapacity();
+
+        for (int i = 0; i < cap; i++) {
+            Edge e = edges[i];
+            if (e != null && e.occupied) {
+                dfsSumCount(e.child, acc);
+            }
+        }
+    }
+
+    // ==========================================================
+    //       1) topKFrequentWordsWithPrefix(prefix, k)
+    // ==========================================================
+    public void topKFrequentWordsWithPrefix(String prefix, int k) {
+        if (prefix == null || prefix.isEmpty() || k <= 0) {
+            System.out.println("Invalid prefix or k.");
+            return;
+        }
+
+        PrefixResult pr = findNodeForPrefix(prefix);
+        if (pr == null) {
+            System.out.println("No words with prefix \"" + prefix + "\".");
+            return;
+        }
+
+        MyMinHeap heap = new MyMinHeap(k);
+        dfsCollectTopK(pr.node, pr.built, heap, k);
+
+        MyMinHeap.HeapEntry[] arr = heap.toArray();
+        int n = arr.length;
+        if (n == 0) {
+            System.out.println("No words with prefix \"" + prefix + "\".");
+            return;
+        }
+
+        // Sort by:
+        // 1) importance descending
+        // 2) word ascending (alphabetically) on ties
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                boolean shouldSwap = false;
+
+                if (arr[j].importance > arr[i].importance) {
+                    shouldSwap = true;
+                } else if (arr[j].importance == arr[i].importance
+                           && arr[j].word.compareTo(arr[i].word) < 0) {
+                    shouldSwap = true;
+                }
+
+                if (shouldSwap) {
+                    MyMinHeap.HeapEntry tmp = arr[i];
+                    arr[i] = arr[j];
+                    arr[j] = tmp;
+                }
+            }
+        }
+
+        System.out.print("Top " + k + " words for prefix \"" + prefix + "\": ");
+        for (int i = 0; i < n; i++) {
+            System.out.print(arr[i].word);
+            if (i < n - 1) System.out.print(" ");
+        }
+        System.out.println();
+    }
+
+    // ==========================================================
+    //       2) getAverageFrequencyOfPrefix(prefix)
+    // ==========================================================
+    public double getAverageFrequencyOfPrefix(String prefix) {
+        if (prefix == null || prefix.isEmpty()) {
+            return 0.0;
+        }
+
+        PrefixResult pr = findNodeForPrefix(prefix);
+        if (pr == null) {
+            return 0.0;
+        }
+
+        SumCount acc = new SumCount();
+        dfsSumCount(pr.node, acc);
+
+        if (acc.count == 0) {
+            return 0.0;
+        }
+        return (double) acc.sum / (double) acc.count;
+    }
+
+    // ==========================================================
+    //       3) predictNextLetter(prefix)
+    // ==========================================================
+    /**
+     * Predicts the next letter after a given prefix.
+     *
+     * Handles:
+     *  1) prefix ends exactly at a node → look at child edges
+     *  2) prefix ends in the middle of an edge label → next char in that label
+     *
+     * Uses getAverageFrequencyOfPrefix(prefix + c) to pick the child
+     * with highest average importance.
+     */
+    public char predictNextLetter(String prefix) {
+        if (prefix == null || prefix.isEmpty()) {
+            return '\0';
+        }
+
+        prefix = prefix.toLowerCase();
+
+        CompressedTrieNode current = root;
+        String remaining = prefix;
+
+        while (true) {
+            // Case 1: prefix ended exactly at this node
+            if (remaining.length() == 0) {
+                if (!current.hasEdges()) {
+                    return '\0';
+                }
+
+                double bestAverage = 0.0;
+                char bestChar = '\0';
+
+                Edge[] edges = current.getEdgeTable().getTable();
+                for (int i = 0; i < edges.length; i++) {
+                    Edge e = edges[i];
+                    if (e != null && e.occupied && !e.label.isEmpty()) {
+                        char c = e.label.charAt(0);
+                        double avg = getAverageFrequencyOfPrefix(prefix + c);
+                        if (avg > bestAverage) {
+                            bestAverage = avg;
+                            bestChar = c;
+                        }
+                    }
+                }
+
+                return bestChar;
+            }
+
+            // Case 2: still characters to match in remaining
+            char first = remaining.charAt(0);
+            Edge edge = current.getEdgeByFirstChar(first);
+            if (edge == null) {
+                return '\0';
+            }
+
+            String label = edge.label;
+
+            // remaining is prefix of label
+            if (label.startsWith(remaining)) {
+                int pos = remaining.length();
+                if (pos < label.length()) {
+                    return label.charAt(pos);
+                } else {
+                    // remaining == label → move to child node
+                    current = edge.child;
+                    remaining = "";
+                }
+            }
+            // label is prefix of remaining
+            else if (remaining.startsWith(label)) {
+                remaining = remaining.substring(label.length());
+                current = edge.child;
+            } else {
+                // mismatch
+                return '\0';
+            }
+        }
     }
 }

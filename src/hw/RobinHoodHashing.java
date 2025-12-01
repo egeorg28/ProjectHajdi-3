@@ -1,10 +1,9 @@
 package hw;
 
 /**
- * RobinHoodHashing implements an open-addressing hash table
- * that stores Edge objects. Collisions are resolved using the
- * Robin Hood hashing strategy, and the table size grows using
- * a sequence of prime capacities.
+ * RobinHoodHashing implements an open-addressing hash table that stores Edge
+ * objects. Collisions are resolved using the Robin Hood hashing strategy, and
+ * the table size grows using a sequence of prime capacities.
  */
 public class RobinHoodHashing {
 
@@ -23,8 +22,8 @@ public class RobinHoodHashing {
     private static final int[] PRIMES = {3, 7, 11, 17, 23, 29};
 
     /**
-     * Constructs a new RobinHoodHashing table with an initial
-     * capacity taken from the first element of the PRIMES array.
+     * Constructs a new RobinHoodHashing table with an initial capacity taken
+     * from the first element of the PRIMES array.
      */
     public RobinHoodHashing() {
         this.primeIndex = 0;
@@ -35,8 +34,8 @@ public class RobinHoodHashing {
     }
 
     /**
-     * Hashes a character to an index in the table.
-     * The hash is based on the first character of the edge label.
+     * Hashes a character to an index in the table. The hash is based on the
+     * first character of the edge label.
      *
      * @param c the character to hash (expected 'a'..'z')
      * @return an index in [0, capacity)
@@ -44,16 +43,17 @@ public class RobinHoodHashing {
     // Hash με βάση το ΠΡΩΤΟ γράμμα της ακμής
     private int hash(char c) {
         int h = (c - 'a') % capacity;
-        if (h < 0) h += capacity;
+        if (h < 0) {
+            h += capacity;
+        }
         return h;
     }
 
     /**
-     * Inserts an Edge into the hash table using Robin Hood hashing.
-     * If the target position is occupied, the algorithm compares
-     * probe lengths and may swap entries so that elements with
-     * larger probe length "steal" positions from those with smaller
-     * probe lengths (the "Robin Hood" idea).
+     * Inserts an Edge into the hash table using Robin Hood hashing. If the
+     * target position is occupied, the algorithm compares probe lengths and may
+     * swap entries so that elements with larger probe length "steal" positions
+     * from those with smaller probe lengths (the "Robin Hood" idea).
      *
      * Also triggers a rehash if the load factor exceeds 90%.
      *
@@ -89,8 +89,8 @@ public class RobinHoodHashing {
                 char exC = existing.label.charAt(0);
                 int home = hash(exC);
                 // existingProbe = distance from its "home" hash index
-                int existingProbe =
-                        (index - home + capacity) % capacity;
+                int existingProbe
+                        = (index - home + capacity) % capacity;
 
                 // If the new element has probed farther than the existing one,
                 // we swap them so that the "unluckier" (bigger probe) element
@@ -110,10 +110,10 @@ public class RobinHoodHashing {
     }
 
     /**
-     * Looks up an Edge by its first character. Uses the same
-     * probing sequence as insert, but stops searching when
-     * the probe length exceeds maxProbeLength, or when a null
-     * slot is encountered (meaning the element is not present).
+     * Looks up an Edge by its first character. Uses the same probing sequence
+     * as insert, but stops searching when the probe length exceeds
+     * maxProbeLength, or when a null slot is encountered (meaning the element
+     * is not present).
      *
      * @param c the first character of the desired edge's label
      * @return the matching Edge or null if not found
@@ -133,9 +133,9 @@ public class RobinHoodHashing {
             }
 
             // Check if this slot contains a live edge with matching first char
-            if (e.occupied &&
-                !e.label.isEmpty() &&
-                e.label.charAt(0) == c) {
+            if (e.occupied
+                    && !e.label.isEmpty()
+                    && e.label.charAt(0) == c) {
                 return e;
             }
 
@@ -149,8 +149,8 @@ public class RobinHoodHashing {
     }
 
     /**
-     * Rehashes the table into a larger one using the next prime capacity.
-     * All active entries from the old table are reinserted into the new one,
+     * Rehashes the table into a larger one using the next prime capacity. All
+     * active entries from the old table are reinserted into the new one,
      * recomputing their positions with the new capacity.
      *
      * If we have already used the last prime in PRIMES, rehash() does nothing.
@@ -182,9 +182,9 @@ public class RobinHoodHashing {
     }
 
     /**
-     * Returns the internal backing array of edges.
-     * NOTE: This exposes the internal representation and
-     * should normally be used only for debugging or analysis.
+     * Returns the internal backing array of edges. NOTE: This exposes the
+     * internal representation and should normally be used only for debugging or
+     * analysis.
      *
      * @return the Edge[] table used by this hash structure
      */
