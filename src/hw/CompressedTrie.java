@@ -5,9 +5,9 @@ import java.io.FileReader;
 import java.io.IOException;
 
 /**
- * A Compressed Trie that stores words using EDGE LABELS (string chunks)
- * instead of one character per node, and stores an "importance" counter
- * on the node where each word ends.
+ * A Compressed Trie that stores words using EDGE LABELS (string chunks) instead
+ * of one character per node, and stores an "importance" counter on the node
+ * where each word ends.
  */
 public class CompressedTrie {
 
@@ -24,8 +24,8 @@ public class CompressedTrie {
 
     // ========= INSERT (public) =========
     /**
-     * Inserts a word into the compressed trie, splitting edges if needed
-     * so common prefixes are stored only once.
+     * Inserts a word into the compressed trie, splitting edges if needed so
+     * common prefixes are stored only once.
      */
     public void insert(String word) {
         if (word == null || word.isEmpty()) {
@@ -47,8 +47,8 @@ public class CompressedTrie {
 
     // ========= INCREASE IMPORTANCE (simple version) =========
     /**
-     * Follows the path of a word and increments importance at the terminal node.
-     * If the path does not exist, it does nothing.
+     * Follows the path of a word and increments importance at the terminal
+     * node. If the path does not exist, it does nothing.
      *
      * (Not used in the fast text update; kept as a utility.)
      */
@@ -73,7 +73,6 @@ public class CompressedTrie {
     // =====================================================
     //                    RECURSIVE HELPERS
     // =====================================================
-
     // ========= INSERT RECURSIVE =========
     private void insertRecursive(CompressedTrieNode currentNode, String word) {
         // No letters left → mark node as end-of-word
@@ -145,7 +144,7 @@ public class CompressedTrie {
                 && commonPrefix.length() < word.length()) {
 
             String suffixLabel = label.substring(commonPrefix.length()); // "r"
-            String suffixWord  = word.substring(commonPrefix.length());  // "t"
+            String suffixWord = word.substring(commonPrefix.length());  // "t"
 
             CompressedTrieNode oldChild = edge.child;
 
@@ -244,16 +243,13 @@ public class CompressedTrie {
     // =====================================================
     //      *** NEW: FASTER IMPORTANCE UPDATE FOR TEXT ***
     // =====================================================
-
     /**
-     * NEW method (added for speed):
-     *   - Tries to find the given word in the trie.
-     *   - If the full word exists AND ends at a valid word node,
-     *     it increments importance.
-     *   - If the word is not in the dictionary, it does nothing.
+     * NEW method (added for speed): - Tries to find the given word in the trie.
+     * - If the full word exists AND ends at a valid word node, it increments
+     * importance. - If the word is not in the dictionary, it does nothing.
      *
-     * Used in updateImportanceFromText so we only traverse the trie ONCE
-     * per word (instead of search + increase).
+     * Used in updateImportanceFromText so we only traverse the trie ONCE per
+     * word (instead of search + increase).
      */
     public void increaseImportanceIfExists(String word) {
         if (word == null || word.isEmpty()) {
@@ -263,11 +259,10 @@ public class CompressedTrie {
     }
 
     /**
-     * Recursive helper for increaseImportanceIfExists.
-     * Single traversal:
-     *   - If we reach the end of the word and node.isEndOfWord == true,
-     *     then importance++ for that node.
-     *   - If at any point we cannot follow edges, we stop.
+     * Recursive helper for increaseImportanceIfExists. Single traversal: - If
+     * we reach the end of the word and node.isEndOfWord == true, then
+     * importance++ for that node. - If at any point we cannot follow edges, we
+     * stop.
      */
     private static void increaseImportanceIfExistsRecursive(CompressedTrieNode currentNode, String word) {
         if (word.length() == 0) {
@@ -295,8 +290,8 @@ public class CompressedTrie {
 
     // ========= LOAD DICTIONARY =========
     /**
-     * Reads a dictionary file (one word per line) and inserts all words
-     * into the compressed trie.
+     * Reads a dictionary file (one word per line) and inserts all words into
+     * the compressed trie.
      */
     public boolean loadDictionary(String filename) {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
@@ -319,8 +314,9 @@ public class CompressedTrie {
     /**
      * *** MODIFIED FOR SPEED ***
      *
-     * Reads a text file character-by-character, builds words using only letters,
-     * and for each completed word calls increaseImportanceIfExists(word).
+     * Reads a text file character-by-character, builds words using only
+     * letters, and for each completed word calls
+     * increaseImportanceIfExists(word).
      *
      * This avoids slow regex split("\\W+") and avoids search+increaseImportance
      * (two traversals). We now have only ONE traversal per dictionary word.
@@ -360,15 +356,15 @@ public class CompressedTrie {
     // ==========================================================
     //      INNER CLASSES FOR PREFIX OPERATIONS / DFS HELPERS
     // ==========================================================
-
     /**
-     * Helper when we search for a prefix:
-     *  - node  : trie node where the prefix ends
-     *  - built : full string from root to that node
+     * Helper when we search for a prefix: - node : trie node where the prefix
+     * ends - built : full string from root to that node
      */
     private static class PrefixResult {
+
         CompressedTrieNode node;
         String built;
+
         PrefixResult(CompressedTrieNode node, String built) {
             this.node = node;
             this.built = built;
@@ -379,6 +375,7 @@ public class CompressedTrie {
      * Helper for accumulating sum and count (for average).
      */
     private static class SumCount {
+
         long sum;
         int count;
     }
@@ -392,8 +389,8 @@ public class CompressedTrie {
     }
 
     private PrefixResult findNodeForPrefixRecursive(CompressedTrieNode node,
-                                                    String built,
-                                                    String remaining) {
+            String built,
+            String remaining) {
         if (remaining.length() == 0) {
             return new PrefixResult(node, built);
         }
@@ -422,10 +419,12 @@ public class CompressedTrie {
 
     // ========= DFS HELPERS =========
     private void dfsCollectTopK(CompressedTrieNode node,
-                                String built,
-                                MyMinHeap heap,
-                                int k) {
-        if (node == null) return;
+            String built,
+            MyMinHeap heap,
+            int k) {
+        if (node == null) {
+            return;
+        }
 
         if (node.isEndOfWord) {
             heap.insertWithCapacity(built, node.importance, k);
@@ -444,7 +443,9 @@ public class CompressedTrie {
     }
 
     private void dfsSumCount(CompressedTrieNode node, SumCount acc) {
-        if (node == null) return;
+        if (node == null) {
+            return;
+        }
 
         if (node.isEndOfWord) {
             acc.sum += node.importance;
@@ -498,7 +499,7 @@ public class CompressedTrie {
                 if (arr[j].importance > arr[i].importance) {
                     shouldSwap = true;
                 } else if (arr[j].importance == arr[i].importance
-                           && arr[j].word.compareTo(arr[i].word) < 0) {
+                        && arr[j].word.compareTo(arr[i].word) < 0) {
                     shouldSwap = true;
                 }
 
@@ -513,7 +514,9 @@ public class CompressedTrie {
         System.out.print("Top " + k + " words for prefix \"" + prefix + "\": ");
         for (int i = 0; i < n; i++) {
             System.out.print(arr[i].word);
-            if (i < n - 1) System.out.print(" ");
+            if (i < n - 1) {
+                System.out.print(" ");
+            }
         }
         System.out.println();
     }
@@ -546,12 +549,11 @@ public class CompressedTrie {
     /**
      * Predicts the next letter after a given prefix.
      *
-     * Handles:
-     *  1) prefix ends exactly at a node → look at child edges
-     *  2) prefix ends in the middle of an edge label → next char in that label
+     * Handles: 1) prefix ends exactly at a node → look at child edges 2) prefix
+     * ends in the middle of an edge label → next char in that label
      *
-     * Uses getAverageFrequencyOfPrefix(prefix + c) to pick the child
-     * with highest average importance.
+     * Uses getAverageFrequencyOfPrefix(prefix + c) to pick the child with
+     * highest average importance.
      */
     public char predictNextLetter(String prefix) {
         if (prefix == null || prefix.isEmpty()) {
@@ -608,8 +610,7 @@ public class CompressedTrie {
                     current = edge.child;
                     remaining = "";
                 }
-            }
-            // label is prefix of remaining
+            } // label is prefix of remaining
             else if (remaining.startsWith(label)) {
                 remaining = remaining.substring(label.length());
                 current = edge.child;
@@ -619,4 +620,10 @@ public class CompressedTrie {
             }
         }
     }
+    // μέσα στην CompressedTrie, έξω από άλλα methods, πριν το τελευταίο }
+
+    CompressedTrieNode getRoot() {
+        return root;
+    }
+
 }

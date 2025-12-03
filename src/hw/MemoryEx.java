@@ -1,28 +1,9 @@
 package hw;
 
-import java.util.List;
-
-/**
- * Πείραμα μνήμης για CompressedTrie.
- *
- * Χρήση:
- *   java -cp src hw.MemoryEx <templateDictFile> <n> <mode> [fixedLen]
- *
- *   templateDictFile : π.χ. /usr/share/dict/american-english
- *   n                : πόσες λέξεις να παράγουμε (π.χ. 10000)
- *   mode             : "fixed" ή "var"
- *   fixedLen         : αν mode = fixed, τότε π.χ. 8
- *
- * Παραδείγματα:
- *   java -cp src hw.MemoryEx /usr/share/dict/american-english 10000 fixed 8
- *   java -cp src hw.MemoryEx /usr/share/dict/american-english 50000 var
- */
 public class MemoryEx {
 
-    // ================================
-    // ΜΟΝΤΕΛΟ ΚΟΣΤΟΥΣ (θεωρητική μνήμη)
-    // ================================
-    private static final int BYTES_PER_REF     = 8; // reference / pointer
+    // Θεωρητικό μοντέλο κόστους
+    private static final int BYTES_PER_REF     = 8;
     private static final int BYTES_PER_INT     = 4;
     private static final int BYTES_PER_BOOLEAN = 1;
     private static final int BYTES_PER_CHAR    = 2;
@@ -32,14 +13,17 @@ public class MemoryEx {
         if (args.length < 3) {
             System.out.println("Usage: java -cp src hw.MemoryEx <templateDictFile> <n> <mode> [fixedLen]");
             System.out.println("  mode: fixed | var");
+            System.out.println("Examples:");
+            System.out.println("  java -cp src hw.MemoryEx /usr/share/dict/american-english 10000 fixed 8");
+            System.out.println("  java -cp src hw.MemoryEx /usr/share/dict/american-english 50000 var");
             return;
         }
 
-        String templateDict = args[0];
+        String templateFile = args[0];
         int n = Integer.parseInt(args[1]);
         String mode = args[2].toLowerCase();
 
-        int fixedLen = 8; // default
+        int fixedLen = 8;
         if (mode.equals("fixed")) {
             if (args.length < 4) {
                 System.out.println("For mode=fixed you must also give fixedLen (e.g. 8)");
@@ -48,74 +32,122 @@ public class MemoryEx {
             fixedLen = Integer.parseInt(args[3]);
         }
 
-        System.out.println("Template dictionary: " + templateDict);
+        System.out.println("Template dictionary: " + templateFile);
         System.out.println("n = " + n + ", mode = " + mode +
                 (mode.equals("fixed") ? (", fixedLen = " + fixedLen) : ""));
         System.out.println();
 
-        // 1) Χτίζουμε μοντέλο λεξικού από το πραγματικό wordlist
-        DictionaryModel model = LexiconStats.buildModelFromFile(templateDict);
+        // 1) Χτίζουμε DictionaryModel από το πραγματικό λεξικό
+        DictionaryModel model = LexiconStats.buildModelFromFile(templateFile);
         if (model == null) {
-            System.out.println("Could not build model from file: " + templateDict);
+            System.out.println("Could not build DictionaryModel. Exiting.");
             return;
         }
 
-        // 2) Φτιάχνουμε synthetic generator με βάση το μοντέλο
-        SyntheticDict gen = new SyntheticDict(model, 12345L);
+        // 2) Ντετερμινιστικός generator
+        DeterministicSyntheticDict gen = new DeterministicSyntheticDict(model);
 
-        // 3) Παράγουμε συνθετικό λεξικό
-        List<String> words;
-        if (mode.equals("fixed")) {
-            words = gen.generateFixedLength(n, fixedLen);
-        } else {
-            words = gen.generateVariableLength(n);
+        // Πόσα δείγματα για τον μέσο όρο
+        int samples = 5;
+
+        long sumTrie = 0;
+        long sumCTrie = 0;
+
+        for (int s = 0; s < samples; s++) {
+            System.out.println("=== SAMPLE " + (s + 1) + " / " + samples + " ===");
+
+            // 3) Συνθετικό λεξικό
+            String[] words;
+            if (mode.equals("fixed")) {
+                words = gen.generateFixedLength(n, fixedLen);
+            } else {
+                words = gen.generateVariableLength(n);
+            }
+
+            System.out.println("Generated " + words.length + " words. Example: " + words[0]);
+
+            // 4) Κλασικό Trie
+            Trie t = new Trie();
+            for (int i = 0; i < words.length; i++) {
+                t.insert(words[i]);
+            }
+            long memTrie = estimateTrieMemory(t);
+            System.out.println("Trie memory (bytes)      : " + memTrie);
+
+            // 5) CompressedTrie
+            CompressedTrie cTrie = new CompressedTrie();
+            for (int i = 0; i < words.length; i++) {
+                cTrie.insert(words[i]);
+            }
+            long memCTrie = estimateCompressedTrieMemory(cTrie);
+            System.out.println("CompressedTrie memory (bytes): " + memCTrie);
+            System.out.println();
+
+            sumTrie += memTrie;
+            sumCTrie += memCTrie;
         }
 
-        System.out.println("Generated " + words.size() + " synthetic words.");
-        if (!words.isEmpty()) {
-            System.out.println("Example word: " + words.get(0));
-        }
-        System.out.println();
+        double avgTrie = (double) sumTrie / samples;
+        double avgCTrie = (double) sumCTrie / samples;
 
-        // 4) Χτίζουμε CompressedTrie
-        CompressedTrie cTrie = new CompressedTrie();
-        for (String w : words) {
-            cTrie.insert(w);
-        }
-        System.out.println("Inserted all words into CompressedTrie.");
+        System.out.println("=== AVERAGE OVER " + samples + " SAMPLES ===");
+        System.out.println("Average Trie memory (bytes)      : " + (long) avgTrie);
+        System.out.println("Average CompressedTrie (bytes)   : " + (long) avgCTrie);
 
-        // 5) Υπολογισμός θεωρητικής μνήμης
-        long memBytes = estimateCompressedTrieMemory(cTrie);
-        double memKB = memBytes / 1024.0;
-        double memMB = memKB / 1024.0;
-
-        System.out.println();
-        System.out.println("Estimated CompressedTrie memory: " + memBytes + " bytes (" +
-                String.format("%.2f", memKB) + " KB, " +
-                String.format("%.2f", memMB) + " MB)");
+        double avgTrieKB = avgTrie / 1024.0;
+        double avgCTrieKB = avgCTrie / 1024.0;
+        System.out.printf("Trie   : %.2f KB\n", avgTrieKB);
+        System.out.printf("CTrie  : %.2f KB\n", avgCTrieKB);
+        System.out.println("===========================================");
     }
 
-    // ================================
-    // ΕΚΤΙΜΗΣΗ ΜΝΗΜΗΣ CompressedTrie
-    // ================================
+    // ============== Μνήμη κλασικού Trie ==============
 
-    private static long estimateCompressedTrieMemory(CompressedTrie trie) {
-        if (trie == null || trie.root == null) {
-            return 0L;
-        }
-        return estimateNode(trie.root);
+    private static long estimateTrieMemory(Trie t) {
+        if (t == null) return 0L;
+        Trie.TrieNode root = t.getRoot();
+        if (root == null) return 0L;
+        return estimateTrieNode(root);
     }
 
-    private static long estimateNode(CompressedTrieNode node) {
+    private static long estimateTrieNode(Trie.TrieNode node) {
         if (node == null) return 0L;
 
         long bytes = 0L;
 
-        // === CompressedTrieNode fields ===
-        // private RobinHoodHashing edgeTable;
-        // public boolean isEndOfWord;
-        // public int importance;
-        bytes += BYTES_PER_REF;      // edgeTable reference
+        // fields: TrieNode[] children; boolean isEndOfWord; int importance;
+        bytes += BYTES_PER_REF;      // children reference
+        bytes += BYTES_PER_BOOLEAN;  // isEndOfWord
+        bytes += BYTES_PER_INT;      // importance
+
+        // children array: 26 references
+        Trie.TrieNode[] children = node.children;
+        if (children != null) {
+            bytes += children.length * BYTES_PER_REF;
+            for (int i = 0; i < children.length; i++) {
+                if (children[i] != null) {
+                    bytes += estimateTrieNode(children[i]);
+                }
+            }
+        }
+
+        return bytes;
+    }
+
+    // ============== Μνήμη CompressedTrie ==============
+
+    private static long estimateCompressedTrieMemory(CompressedTrie trie) {
+        if (trie == null || trie.getRoot() == null) return 0L;
+        return estimateCNode(trie.getRoot());
+    }
+
+    private static long estimateCNode(CompressedTrieNode node) {
+        if (node == null) return 0L;
+
+        long bytes = 0L;
+
+        // fields: RobinHoodHashing edgeTable; boolean isEndOfWord; int importance;
+        bytes += BYTES_PER_REF;      // edgeTable ref
         bytes += BYTES_PER_BOOLEAN;  // isEndOfWord
         bytes += BYTES_PER_INT;      // importance
 
@@ -124,18 +156,17 @@ public class MemoryEx {
             return bytes;
         }
 
-        // μνήμη για hash table (χωρίς τα Edge objects εδώ)
+        // μνήμη hash table (χωρίς Edge αντικείμενα)
         bytes += estimateHashTableMemory(table);
 
-        // DFS στα παιδιά μέσω του πίνακα
-        Edge[] arr = table.getTable();   // ΠΡΕΠΕΙ να έχεις υλοποιήσει getTable() στο RobinHoodHashing
+        // τώρα μετράμε ακμές και παιδιά
+        Edge[] arr = table.getTable();
         if (arr != null) {
-            for (Edge e : arr) {
+            for (int i = 0; i < arr.length; i++) {
+                Edge e = arr[i];
                 if (e != null && e.occupied) {
-                    // μνήμη ακμής
                     bytes += estimateEdgeMemory(e);
-                    // αναδρομή στο παιδί
-                    bytes += estimateNode(e.child);
+                    bytes += estimateCNode(e.child);
                 }
             }
         }
@@ -146,20 +177,13 @@ public class MemoryEx {
     private static long estimateHashTableMemory(RobinHoodHashing table) {
         long bytes = 0L;
 
-        // Fields στον RobinHoodHashing:
-        //  private Edge[] table;
-        //  private int capacity;
-        //  private int size;
-        //  private int maxProbeLength;
-        //  private int primeIndex;
-
+        // fields: Edge[] table; int capacity, size, maxProbeLength, primeIndex;
         bytes += BYTES_PER_REF;          // Edge[] reference
-        bytes += 4L * BYTES_PER_INT;     // 4 int πεδία
+        bytes += 4L * BYTES_PER_INT;     // 4 int
 
-        Edge[] arr = table.getTable();
-        if (arr != null) {
-            // μόνο οι θέσεις του array (references)
-            bytes += (long) arr.length * BYTES_PER_REF;
+        int cap = table.getCapacity();
+        if (cap > 0) {
+            bytes += (long) cap * BYTES_PER_REF;
         }
 
         return bytes;
@@ -168,16 +192,11 @@ public class MemoryEx {
     private static long estimateEdgeMemory(Edge e) {
         long bytes = 0L;
 
-        // Fields στην Edge:
-        //  String label;
-        //  CompressedTrieNode child;
-        //  boolean occupied;
-
-        bytes += BYTES_PER_REF;      // label reference
-        bytes += BYTES_PER_REF;      // child reference
+        // fields: String label; CompressedTrieNode child; boolean occupied;
+        bytes += BYTES_PER_REF;      // label ref
+        bytes += BYTES_PER_REF;      // child ref
         bytes += BYTES_PER_BOOLEAN;  // occupied
 
-        // Μνήμη για το String label (πολύ απλοποιημένα)
         if (e.label != null) {
             int len = e.label.length();
             bytes += (long) len * BYTES_PER_CHAR;

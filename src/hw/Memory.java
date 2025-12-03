@@ -1,13 +1,10 @@
 package hw;
 
-import java.util.List;
-
 public class Memory {
 
     public static void main(String[] args) {
-        // Διαλέγεις ΠΟΙΟ πραγματικό λεξικό θες ως πρότυπο:
-        String templateDict = "/usr/share/dict/words";
-        // ή "hw/dict.txt", ή "/mnt/c/Users/.../some_wordlist.txt"
+
+        String templateDict = "/usr/share/dict/words";  // ή ό,τι άλλο λεξικό θες
 
         DictionaryModel model = LexiconStats.buildModelFromFile(templateDict);
         if (model == null) {
@@ -15,16 +12,16 @@ public class Memory {
             return;
         }
 
-        SyntheticDict gen = new SyntheticDict(model, 12345L);
+        DeterministicSyntheticDict gen = new DeterministicSyntheticDict(model);
 
         int n = 10000;
 
-        // π.χ. σενάριο fixed length:
-        List<String> words = gen.generateFixedLength(n, 8);
+        // Σενάριο 1: σταθερό μήκος
+        String[] words = gen.generateFixedLength(n, 8);
 
         CompressedTrie cTrie = new CompressedTrie();
-        for (String w : words) {
-            cTrie.insert(w);
+        for (int i = 0; i < n; i++) {
+            cTrie.insert(words[i]);
         }
 
         System.out.println("Inserted " + n + " words into CompressedTrie using template: " + templateDict);

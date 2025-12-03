@@ -234,17 +234,22 @@ public class Trie {
         return true;
     }
 
+// 👉 ΝΕΟ: δίνουμε πρόσβαση στο root για τα πειράματα μνήμης
+    TrieNode getRoot() {
+        return root;
+    }
+
     // ================== TrieNode (inner class) ==================
     /**
      * Represents a node in the Trie. Each node has: - an array of 26 children
      * pointers (for 'a'..'z') - a boolean flag isEndOfWord to mark if a word
      * ends here.
      */
-    private static class TrieNode {
+     static class TrieNode {
 
-        private static final int ALPHABET_SIZE = 26; // Number of letters in English lowercase alphabet
-        private TrieNode[] children; // Array of child nodes (one per letter)
-        private boolean isEndOfWord; // True if a word ends at this node
+        static final int ALPHABET_SIZE = 26; // Number of letters in English lowercase alphabet
+        TrieNode[] children; // Array of child nodes (one per letter)
+         boolean isEndOfWord; // True if a word ends at this node
 
         /**
          * Constructor: Initializes: - isEndOfWord = false (no word ends here
