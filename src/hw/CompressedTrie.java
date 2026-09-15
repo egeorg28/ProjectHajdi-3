@@ -620,7 +620,6 @@ public class CompressedTrie {
             }
         }
     }
-    // μέσα στην CompressedTrie, έξω από άλλα methods, πριν το τελευταίο }
 
     CompressedTrieNode getRoot() {
         return root;
