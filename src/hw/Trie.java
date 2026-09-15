@@ -233,8 +233,7 @@ public class Trie {
         }
         return true;
     }
-
-// 👉 ΝΕΟ: δίνουμε πρόσβαση στο root για τα πειράματα μνήμης
+// Provides root access for memory analysis.
     TrieNode getRoot() {
         return root;
     }
