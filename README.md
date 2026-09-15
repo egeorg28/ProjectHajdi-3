@@ -1,4 +1,4 @@
-# Dictionary-prefix
+# Dictionary Prefix Engine
 
 
 A Java implementation of dictionary and text-analysis operations using custom data structures, including a **Compressed Trie**, **Robin Hood Hash Table**, and **Min-Heap**.
